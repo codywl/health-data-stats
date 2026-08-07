@@ -4,7 +4,6 @@ import { createContext, useContext, useState, useEffect } from "react";
 type DataEntry = {
   value: number,
   date: string,
-  label: string,
 };
 
 type DataSet = {
@@ -15,17 +14,23 @@ type FullDataSet = Record<string, DataSet>;
 
 function useLocalStorage<T>(key: string, fallback: T) {
   // val as a stateful value, setVal changes it
-  const [val, setVal] = useState(fallback);
+  const [val, setVal] = useState<T>(fallback);
+  const [loaded, setLoaded] = useState(false);
 
-  // if key or fallback changes, getItem(key), set val to stored if exists, otherwise set to fallback
+  // if there's data already, use it
   useEffect(() => {
     const stored = localStorage.getItem(key);
-    setVal(stored ? JSON.parse(stored) : fallback);
-  }, [fallback, key]);
+    if (stored) {
+      setVal(JSON.parse(stored));
+      setLoaded(true);
+    }
+  }, [key]);
 
-  // if key or val change, set key to val
+  // set localStorage[key] to val if loaded already
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(val));
+    if (loaded) {
+      localStorage.setItem(key, JSON.stringify(val));
+    }
   }, [key, val]);
 
   return [val, setVal] as const;

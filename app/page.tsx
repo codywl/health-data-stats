@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { DisplayData as DisplayPanel } from "../app/Display";
+import { DisplayPanel } from "../app/DisplayPanel";
 
 export default function Home() {
   return (

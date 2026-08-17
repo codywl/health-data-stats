@@ -11,8 +11,6 @@ import {
   Title,
   Tooltip,
   Legend,
-  Scale,
-  CoreScaleOptions,
 } from 'chart.js';
 ChartJS.register(
   CategoryScale,
@@ -27,32 +25,10 @@ ChartJS.defaults.color = "#fff";
 ChartJS.defaults.backgroundColor = "#fff";
 ChartJS.defaults.borderColor = "rgba(100, 100, 100, 0.5)";
 
-
-const getStartDate = () => {
-  const dateElement: HTMLInputElement = document.querySelector("input[type='date']") as HTMLInputElement;
-  return dateElement ? dateElement.value : new Date();
-};
-
-function DatePanel({ visible, callback }: { visible: boolean, callback: Function }) {
-  return (
-    <fieldset className={(visible ? "flex" : "hidden") + " flex-col border-2 border-slate-700 m-2 p-2 gap-2 rounded-xs"}>
-      <label>Date</label>
-      <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-start" onChange={(e) => { callback(e) }} />
-    </fieldset>
-  );
-}
-
 export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
-  const [dateVisible, setDateVisible] = useState(false);
   const [date, setDate] = useState("");
-
-
-  const handleOpenDate = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setDateVisible(!dateVisible);
-  }
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -83,6 +59,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     setData({ entries: [] });
   }
 
+  const filteredEntries = date ? data.entries.filter(e => { new Date(e.date).toLocaleDateString("en-CA") === date }) : data.entries;
   const lineOptions = {
     responsive: true,
     color: "#fff",
@@ -108,7 +85,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       {
         label: dataName,
         borderColor: "#fff",
-        data: data.entries.map(e => ({ x: e.date, y: e.value })),
+        data: filteredEntries.map(e => ({ x: e.date, y: e.value })),
       }
     ]
   };
@@ -121,9 +98,9 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
           <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} />
           <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
           <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => handleResetData()}>Reset Data</button>
-          <button className="cursor-pointer ml-2 p-1 rounded-sm bg-blue-600" onClick={(e) => handleOpenDate(e)}> Date</button>
+          <input className="w-38 ml-2 p-1 rounded-sm bg-slate-600" type="date" name="date-start" onChange={(e) => { handleDateChange(e) }} />
         </form>
-        <DatePanel visible={dateVisible} callback={handleDateChange} />
+        <span>{date || new Date().toLocaleString().slice(0, 9)}</span>
         <Line data={lineData} options={lineOptions} />
       </div>
     </div >

@@ -33,14 +33,11 @@ const getStartDate = () => {
   return dateElement ? dateElement.value : new Date();
 };
 
-function DatePanel({ visible }: { visible: boolean }) {
+function DatePanel({ visible, callback }: { visible: boolean, callback: Function }) {
   return (
     <fieldset className={(visible ? "flex" : "hidden") + " flex-col border-2 border-slate-700 m-2 p-2 gap-2 rounded-xs"}>
-      <legend>Date Range</legend>
-      <label>Date Start</label>
-      <input className="p-1 rounded-sm bg-slate-600" type="date" name="date-start" />
-      <label>Date End</label>
-      <input className="p-1 rounded-sm bg-slate-600" type="date" name="date-end" />
+      <label>Date</label>
+      <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-start" onChange={(e) => { callback(e) }} />
     </fieldset>
   );
 }
@@ -49,11 +46,17 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
   const [dateVisible, setDateVisible] = useState(false);
+  const [date, setDate] = useState("");
 
 
   const handleOpenDate = (e: React.MouseEvent) => {
     e.preventDefault();
     setDateVisible(!dateVisible);
+  }
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setDate(e.target.value);
   }
 
   const handleFormSubmit = (e: React.SubmitEvent) => {
@@ -120,7 +123,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
           <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => handleResetData()}>Reset Data</button>
           <button className="cursor-pointer ml-2 p-1 rounded-sm bg-blue-600" onClick={(e) => handleOpenDate(e)}> Date</button>
         </form>
-        <DatePanel visible={dateVisible} />
+        <DatePanel visible={dateVisible} callback={handleDateChange} />
         <Line data={lineData} options={lineOptions} />
       </div>
     </div >

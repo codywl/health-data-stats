@@ -59,7 +59,12 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     setData({ entries: [] });
   }
 
-  const filteredEntries = date ? data.entries.filter(e => { new Date(e.date).toLocaleDateString("en-CA") === date }) : data.entries;
+  const filteredEntries = date ?
+    data.entries.filter(e => {
+      console.log(new Date(e.date).toLocaleDateString("en-CA"));
+      return new Date(e.date).toLocaleDateString("en-CA") == date
+    }) : data.entries;
+
   const lineOptions = {
     responsive: true,
     color: "#fff",

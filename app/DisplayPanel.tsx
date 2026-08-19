@@ -63,7 +63,7 @@ function EntriesTable({ selected }: { selected: string }) {
 export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {

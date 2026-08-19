@@ -21,9 +21,10 @@ function useLocalStorage<T>(key: string, fallback: T) {
   useEffect(() => {
     const stored = localStorage.getItem(key);
     if (stored) {
+      console.log("stored:", stored);
       setVal(JSON.parse(stored));
-      setLoaded(true);
     }
+    setLoaded(true);
   }, [key]);
 
   // set localStorage[key] to val if loaded already
@@ -37,7 +38,8 @@ function useLocalStorage<T>(key: string, fallback: T) {
 }
 
 export const DisplayContext = createContext<{
-  data: FullDataSet, setNew: (key: string, dataset: DataSet) => void;
+  data: FullDataSet,
+  setNew: (key: string, dataset: DataSet) => void;
 } | null>(null);
 
 export function DisplayProvider({ children }: { children: React.ReactNode }) {

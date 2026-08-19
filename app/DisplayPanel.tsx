@@ -11,10 +11,14 @@ import {
   Title,
   Tooltip,
   Legend,
+  TimeScale,
 } from 'chart.js';
+import "chartjs-adapter-date-fns";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
+  TimeScale,
   PointElement,
   LineElement,
   Title,
@@ -25,10 +29,42 @@ ChartJS.defaults.color = "#fff";
 ChartJS.defaults.backgroundColor = "#fff";
 ChartJS.defaults.borderColor = "rgba(100, 100, 100, 0.5)";
 
+function EntriesTable({ selected }: { selected: string }) {
+  return (
+    <ul>
+      <li>
+        <div className="bg-slate-400 p-2 flex gap-2">
+          <span>MM-DD-YYYY</span>
+          <button className="bg-red-400 p-2">Remove</button>
+        </div>
+      </li>
+      <li>
+        <div className="bg-slate-400 p-2 flex gap-2">
+          <span>MM-DD-YYYY</span>
+          <button className="bg-red-400 p-2">Remove</button>
+        </div>
+      </li>
+      <li>
+        <div className="bg-slate-400 p-2 flex gap-2">
+          <span>MM-DD-YYYY</span>
+          <button className="bg-red-400 p-2">Remove</button>
+        </div>
+      </li>
+      <li>
+        <div className="bg-slate-400 p-2 flex gap-2">
+          <span>MM-DD-YYYY</span>
+          <button className="bg-red-400 p-2">Remove</button>
+        </div>
+      </li>
+    </ul>
+  )
+}
+
 export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
   const [date, setDate] = useState("");
+  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -37,13 +73,13 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   const handleFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!inputVal) {
+    if (!inputVal || Number.isNaN(parseFloat(inputVal))) {
       return;
     }
 
     const newDataEntry = {
       value: parseFloat(inputVal),
-      date: new Date().toLocaleString(),
+      date: new Date().toISOString(),
     };
 
     if (data.entries.length === 0) {
@@ -61,10 +97,11 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   const filteredEntries = date ?
     data.entries.filter(e => {
-      console.log(new Date(e.date).toLocaleDateString("en-CA"));
       return new Date(e.date).toLocaleDateString("en-CA") == date
     }) : data.entries;
 
+
+  const rangeBaseDate = date ? new Date(`${date}T00:00:00`) : new Date();
   const lineOptions = {
     responsive: true,
     color: "#fff",
@@ -75,11 +112,16 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     },
     scales: {
       x: {
+        type: "time" as const,
+        time: {
+          unit: "hour" as const,
+          displayFormats: { hour: "ha" },
+        },
+        min: new Date(rangeBaseDate).setHours(0, 0, 0, 0),
+        max: new Date(rangeBaseDate).setHours(23, 59, 59, 0),
         ticks: {
           align: "start" as const,
-          callback: function() {
-            return null;
-          }
+          maxTicksLimit: 24
         }
       }
     }
@@ -107,6 +149,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         </form>
         <span>{date || new Date().toLocaleString().slice(0, 9)}</span>
         <Line data={lineData} options={lineOptions} />
+        <EntriesTable selected={""} />
       </div>
     </div >
   );

@@ -35,7 +35,7 @@ type DataEntry = {
   date: string,
 };
 
-function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, data: Array<object>, setData: Function }) {
+function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData: Function }) {
   function handleRemove(date: string) {
     const newData = entries.filter((val) => { return val.date !== date });
     setData({ entries: newData })
@@ -43,9 +43,11 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, data: A
 
   const listItems = entries ? entries.map((entry: DataEntry, idx: number) =>
     <li key={idx}>
-      <div className="bg-slate-400 p-2 flex gap-2">
-        <span>{entry.date}</span>
-        <button className="bg-red-400 p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
+      <div className="text-sm bg-slate-800 m-1 border-2 border-slate-700 rounded-sm p-2 flex justify-between gap-2">
+        <div className="flex flex-col">
+          <span>Value: {entry.value}</span>
+        </div>
+        <button className="bg-red-600 border-2 border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
     </li>) : <span>No entries yet.</span>
   return (
@@ -67,7 +69,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   const handleFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!inputVal || Number.isNaN(parseFloat(inputVal))) {
+    if (!inputVal || Number.isNaN(parseFloat(inputVal)) || parseFloat(inputVal) < 0 || parseFloat(inputVal) > 10) {
       return;
     }
 
@@ -105,6 +107,10 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       },
     },
     scales: {
+      y: {
+        min: 0,
+        max: 10,
+      },
       x: {
         type: "time" as const,
         time: {
@@ -143,7 +149,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         </form>
         <span>{date || new Date().toLocaleString().slice(0, 9)}</span>
         <Line data={lineData} options={lineOptions} />
-        <EntriesTable entries={data.entries} data={data.entries} setData={setData} />
+        <EntriesTable entries={filteredEntries} setData={setData} />
       </div>
     </div >
   );

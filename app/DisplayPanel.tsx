@@ -29,33 +29,28 @@ ChartJS.defaults.color = "#fff";
 ChartJS.defaults.backgroundColor = "#fff";
 ChartJS.defaults.borderColor = "rgba(100, 100, 100, 0.5)";
 
-function EntriesTable({ selected }: { selected: string }) {
+
+type DataEntry = {
+  value: number,
+  date: string,
+};
+
+function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, data: Array<object>, setData: Function }) {
+  function handleRemove(date: string) {
+    const newData = entries.filter((val) => { return val.date !== date });
+    setData({ entries: newData })
+  }
+
+  const listItems = entries ? entries.map((entry: DataEntry, idx: number) =>
+    <li key={idx}>
+      <div className="bg-slate-400 p-2 flex gap-2">
+        <span>{entry.date}</span>
+        <button className="bg-red-400 p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
+      </div>
+    </li>) : <span>No entries yet.</span>
   return (
     <ul>
-      <li>
-        <div className="bg-slate-400 p-2 flex gap-2">
-          <span>MM-DD-YYYY</span>
-          <button className="bg-red-400 p-2">Remove</button>
-        </div>
-      </li>
-      <li>
-        <div className="bg-slate-400 p-2 flex gap-2">
-          <span>MM-DD-YYYY</span>
-          <button className="bg-red-400 p-2">Remove</button>
-        </div>
-      </li>
-      <li>
-        <div className="bg-slate-400 p-2 flex gap-2">
-          <span>MM-DD-YYYY</span>
-          <button className="bg-red-400 p-2">Remove</button>
-        </div>
-      </li>
-      <li>
-        <div className="bg-slate-400 p-2 flex gap-2">
-          <span>MM-DD-YYYY</span>
-          <button className="bg-red-400 p-2">Remove</button>
-        </div>
-      </li>
+      {listItems}
     </ul>
   )
 }
@@ -64,7 +59,6 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -149,7 +143,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         </form>
         <span>{date || new Date().toLocaleString().slice(0, 9)}</span>
         <Line data={lineData} options={lineOptions} />
-        <EntriesTable selected={""} />
+        <EntriesTable entries={data.entries} data={data.entries} setData={setData} />
       </div>
     </div >
   );

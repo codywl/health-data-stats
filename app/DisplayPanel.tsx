@@ -57,10 +57,18 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
   )
 }
 
+function ResetButton({ confirm, setConfirm, handleReset }: { confirm: boolean, setConfirm: Function, handleReset: Function }) {
+  return (confirm ?
+    <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => setConfirm(!confirm)}>Reset Data</button> :
+    <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => handleReset()}>Confirm</button>
+  )
+}
+
 export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [confirm, setConfirm] = useState(true);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -89,6 +97,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   const handleResetData = () => {
     setData({ entries: [] });
+    setConfirm(!confirm);
   }
 
   const filteredEntries = date ?
@@ -144,10 +153,9 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         <form className="p-2 flex" onSubmit={handleFormSubmit}>
           <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} />
           <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
-          <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => handleResetData()}>Reset Data</button>
+          <ResetButton handleReset={handleResetData} confirm={confirm} setConfirm={setConfirm} />
           <input className="w-38 ml-2 p-1 rounded-sm bg-slate-600" type="date" name="date-start" onChange={(e) => { handleDateChange(e) }} />
         </form>
-        <span>{date || new Date().toLocaleString().slice(0, 9)}</span>
         <Line data={lineData} options={lineOptions} />
         <EntriesTable entries={filteredEntries} setData={setData} />
       </div>

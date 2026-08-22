@@ -1,7 +1,8 @@
 "use client";
 import { useData } from "@/app/context/DisplayContext";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Line } from "react-chartjs-2";
+import { motion } from "motion/react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -57,18 +58,37 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
   )
 }
 
-function ResetButton({ confirm, setConfirm, handleReset }: { confirm: boolean, setConfirm: Function, handleReset: Function }) {
-  return (confirm ?
-    <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => setConfirm(!confirm)}>Reset Data</button> :
-    <button className="cursor-pointer ml-2 p-1 rounded-sm bg-red-600" onClick={() => handleReset()}>Confirm</button>
+function ResetButton({ handleReset }: { handleReset: Function }) {
+  const [isOn, setIsOn] = useState(false)
+  const toggleSwitch = () => setIsOn(!isOn)
+
+  return (
+    <div className="flex">
+      <button
+        className="ml-2 w-12 rounded-full bg-slate-500 p-1 toggle-container flex"
+        onClick={toggleSwitch}
+        style={{ justifyContent: "flex-" + (isOn ? "start" : "end") }}
+      >
+        <motion.div
+          className="rounded-full w-6 h-6 bg-slate-300 toggle-handle"
+          layout
+          transition={{
+            type: "spring",
+            visualDuration: 0.2,
+            bounce: 0.2,
+          }}
+        />
+      </button>
+      <button className={(!isOn ? "bg-red-500 cursor-pointer" : "bg-slate-500 opacity-50") + " rounded-sm p-1 ml-2"}>Reset</button>
+    </div>
   )
 }
 
 export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [confirm, setConfirm] = useState(true);
+  const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
+  const [confirm, setConfirm] = useState(false);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -154,7 +174,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
           <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} />
           <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
           <ResetButton handleReset={handleResetData} confirm={confirm} setConfirm={setConfirm} />
-          <input className="w-38 ml-2 p-1 rounded-sm bg-slate-600" type="date" name="date-start" onChange={(e) => { handleDateChange(e) }} />
+          <input className="w-38 ml-2 p-1 rounded-sm bg-slate-600" type="date" name="date-start" value={date} onChange={(e) => { handleDateChange(e) }} />
         </form>
         <Line data={lineData} options={lineOptions} />
         <EntriesTable entries={filteredEntries} setData={setData} />

@@ -1,6 +1,6 @@
 "use client";
 import { useData } from "@/app/context/DisplayContext";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { motion } from "motion/react";
 import {
@@ -83,13 +83,41 @@ function ResetButton({ handleReset }: { handleReset: Function }) {
 export function DisplayPanel({ dataName }: { dataName: string }) {
   const [data, setData] = useData(dataName);
   const [inputVal, setInputVal] = useState("");
+  const [manualInputVal, setManualInputVal] = useState("");
+  const [manualTime, setManualTime] = useState(1);
+  const [manualDate, setManualDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [confirm, setConfirm] = useState(false);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     setDate(e.target.value);
-  }
+  };
+
+  const handleManualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setManualDate(e.target.value);
+  };
+
+  const handleManualFormSubmit = (e: React.SubmitEvent) => {
+    e.preventDefault();
+    console.log("submit");
+    const thisDate = new Date(`${manualDate}T00:00:00`);
+    thisDate.setHours(manualTime);
+    const manualDataEntry = {
+      value: parseFloat(manualInputVal),
+      date: thisDate.toISOString()
+    }
+
+    console.log(thisDate.toISOString())
+    if (data.entries.length === 0) {
+      setData({ entries: [...data.entries, manualDataEntry] });
+    }
+    else if (manualDataEntry.date != data.entries[data.entries.length - 1].date) {
+      setData({ entries: [...data.entries, manualDataEntry] })
+    }
+
+  };
 
   const handleFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -166,16 +194,29 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     <div className="flex flex-col gap-2 min-w-2/3 min-h-2/3">
       <div className="data-title max-w-2/3">{dataName}</div>
       <div className="stats bg-slate-900 border-gray-700 border-2 rounded-sm min-h-20">
+
         <form className="p-2 flex gap-2" onSubmit={handleFormSubmit}>
-          <div className="border-2 border-slate-400 p-1 rounded-sm">
+          <div className="border-2 border-slate-700 p-1 rounded-sm">
             <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} placeholder="1-10" onChange={e => setInputVal(e.target.value)} />
             <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
           </div>
-          <div className="border-2 border-slate-400 p-1 rounded-sm">
+          <div className="border-2 border-slate-700 p-1 rounded-sm">
             <ResetButton handleReset={handleResetData} />
           </div>
-          <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-start" value={date} onChange={(e) => { handleDateChange(e) }} />
+          <div className="border-2 border-slate-700 p-1 rounded-sm">
+            <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-start" value={date} onChange={(e) => { handleDateChange(e) }} />
+          </div>
         </form>
+
+        <form className="p-2 flex gap-2" onSubmit={handleManualFormSubmit}>
+          <div className="border-2 border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
+            <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualInputVal} placeholder="1-10" onChange={e => setManualInputVal(e.target.value)} />
+            <input className="p-1 w-24 bg-slate-600 rounded" type="text" value={manualTime} placeholder="12AM-12PM" onChange={e => setManualTime(e.target.value)} />
+            <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-manual" value={manualDate} onChange={(e) => { handleManualDateChange(e) }} />
+            <button className="cursor-pointer p-1 rounded-sm bg-blue-400" type="submit">Manual Entry</button>
+          </div>
+        </form>
+
         <Line data={lineData} options={lineOptions} />
         <EntriesTable entries={filteredEntries} setData={setData} />
       </div>

@@ -75,7 +75,10 @@ function ResetButton({ handleReset }: { handleReset: Function }) {
           layout
         />
       </button>
-      <button className={(isOn ? "bg-red-500 cursor-pointer" : "bg-slate-500 opacity-50") + " rounded-sm p-1 ml-2"} onClick={() => { handleReset(); setIsOn(false) }}>Reset</button>
+      <button
+        disabled={!isOn}
+        className={(isOn ? "bg-red-500 cursor-pointer" : "bg-slate-500 opacity-50") + " rounded-sm p-1 ml-2"}
+        onClick={() => { handleReset(); setIsOn(false) }}>Reset</button>
     </div>
   )
 }
@@ -101,7 +104,6 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   const handleManualFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
-    console.log("submit");
     const thisDate = new Date(`${manualDate}T00:00:00`);
     thisDate.setHours(manualTime);
     const manualDataEntry = {
@@ -109,12 +111,12 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       date: thisDate.toISOString()
     }
 
-    console.log(thisDate.toISOString())
     if (data.entries.length === 0) {
       setData({ entries: [...data.entries, manualDataEntry] });
     }
     else if (manualDataEntry.date != data.entries[data.entries.length - 1].date) {
-      setData({ entries: [...data.entries, manualDataEntry] })
+      const sortedData = { entries: [...data.entries, manualDataEntry].sort((a, b) => { return (a.date > b.date ? 1 : -1) }) };
+      setData(sortedData);
     }
 
   };

@@ -43,14 +43,14 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
   }
 
   const listItems = entries ? entries.map((entry: DataEntry, idx: number) =>
-    <li key={idx}>
+    <motion.li key={idx} layout>
       <div className="text-sm bg-slate-800 m-1 border-2 border-slate-700 rounded-sm p-2 flex justify-between gap-2">
         <div className="flex flex-col">
           <span>Value: {entry.value}</span>
         </div>
         <button className="bg-red-600 border-2 border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
-    </li>) : <span>No entries yet.</span>
+    </motion.li>) : <span>No entries yet.</span>
   return (
     <ul>
       {listItems}
@@ -65,21 +65,17 @@ function ResetButton({ handleReset }: { handleReset: Function }) {
   return (
     <div className="flex">
       <button
-        className="ml-2 w-12 rounded-full bg-slate-500 p-1 toggle-container flex"
+        className="cursor-pointer w-12 rounded-full bg-slate-500 p-1 flex"
         onClick={toggleSwitch}
-        style={{ justifyContent: "flex-" + (isOn ? "start" : "end") }}
+        style={{ justifyContent: "flex-" + (isOn ? "end" : "start") }}
       >
         <motion.div
-          className="rounded-full w-6 h-6 bg-slate-300 toggle-handle"
+          className="rounded-full w-6 h-6 bg-slate-300"
+          style={{ originY: "0px" }}
           layout
-          transition={{
-            type: "spring",
-            visualDuration: 0.2,
-            bounce: 0.2,
-          }}
         />
       </button>
-      <button className={(!isOn ? "bg-red-500 cursor-pointer" : "bg-slate-500 opacity-50") + " rounded-sm p-1 ml-2"}>Reset</button>
+      <button className={(isOn ? "bg-red-500 cursor-pointer" : "bg-slate-500 opacity-50") + " rounded-sm p-1 ml-2"} onClick={() => { handleReset(); setIsOn(false) }}>Reset</button>
     </div>
   )
 }
@@ -170,11 +166,15 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     <div className="flex flex-col gap-2 min-w-2/3 min-h-2/3">
       <div className="data-title max-w-2/3">{dataName}</div>
       <div className="stats bg-slate-900 border-gray-700 border-2 rounded-sm min-h-20">
-        <form className="p-2 flex" onSubmit={handleFormSubmit}>
-          <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} onChange={e => setInputVal(e.target.value)} />
-          <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
-          <ResetButton handleReset={handleResetData} confirm={confirm} setConfirm={setConfirm} />
-          <input className="w-38 ml-2 p-1 rounded-sm bg-slate-600" type="date" name="date-start" value={date} onChange={(e) => { handleDateChange(e) }} />
+        <form className="p-2 flex gap-2" onSubmit={handleFormSubmit}>
+          <div className="border-2 border-slate-400 p-1 rounded-sm">
+            <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} placeholder="1-10" onChange={e => setInputVal(e.target.value)} />
+            <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
+          </div>
+          <div className="border-2 border-slate-400 p-1 rounded-sm">
+            <ResetButton handleReset={handleResetData} />
+          </div>
+          <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-start" value={date} onChange={(e) => { handleDateChange(e) }} />
         </form>
         <Line data={lineData} options={lineOptions} />
         <EntriesTable entries={filteredEntries} setData={setData} />

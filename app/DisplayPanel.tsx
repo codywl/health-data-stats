@@ -2,7 +2,7 @@
 import { useData } from "@/app/context/DisplayContext";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,6 +15,7 @@ import {
   TimeScale,
 } from 'chart.js';
 import "chartjs-adapter-date-fns";
+import { Dialog } from "./Dialog";
 
 ChartJS.register(
   CategoryScale,
@@ -47,12 +48,13 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
       <div className="text-sm bg-slate-800 m-1 border-2 border-slate-700 rounded-sm p-2 flex justify-between gap-2">
         <div className="flex flex-col">
           <span>Value: {entry.value}</span>
+          <span>Date: {new Date(entry.date).toLocaleString()}</span>
         </div>
         <button className="bg-red-600 border-2 border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
     </motion.li>) : <span>No entries yet.</span>
   return (
-    <ul>
+    <ul className="max-h-40 overflow-scroll">
       {listItems}
     </ul>
   )
@@ -91,6 +93,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const [manualDate, setManualDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [confirm, setConfirm] = useState(false);
+  const [dialogPos, setDialogPos] = useState<{ x: number, y: number } | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -210,14 +213,25 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
           </div>
         </form>
 
-        <form className="p-2 flex gap-2" onSubmit={handleManualFormSubmit}>
-          <div className="border-2 border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
-            <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualInputVal} placeholder="1-10" onChange={e => setManualInputVal(e.target.value)} />
-            <input className="p-1 w-24 bg-slate-600 rounded" type="text" value={manualTime} placeholder="12AM-12PM" onChange={e => setManualTime(e.target.value)} />
-            <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-manual" value={manualDate} onChange={(e) => { handleManualDateChange(e) }} />
-            <button className="cursor-pointer p-1 rounded-sm bg-blue-400" type="submit">Manual Entry</button>
+        <div className="px-2 flex gap-2">
+          <div className="border-2 border-slate-700 p-1 rounded-sm">
+            <button className="cursor-pointer p-1 rounded-sm bg-blue-400" onClick={(e) => { setDialogPos({ x: e.clientX, y: e.clientY }) }}>Manual Entry</button>
           </div>
-        </form>
+        </div>
+        <AnimatePresence>
+          {dialogPos && (
+            <Dialog cursorX={dialogPos.x} cursorY={dialogPos.y} onClose={() => setDialogPos(null)}>
+              <motion.form className="p-2 flex gap-2 bg-slate-800 rounded-sm" onSubmit={handleManualFormSubmit}>
+                <div className="border-2 border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
+                  <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualInputVal} placeholder="1-10" onChange={e => setManualInputVal(e.target.value)} />
+                  <input className="p-1 w-24 bg-slate-600 rounded" type="text" value={manualTime} placeholder="12AM-12PM" onChange={e => setManualTime(parseFloat(e.target.value))} />
+                  <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-manual" value={manualDate} onChange={(e) => { handleManualDateChange(e) }} />
+                  <button className="cursor-pointer p-1 rounded-sm bg-blue-400" type="submit">Add Entry</button>
+                </div>
+              </motion.form>
+            </Dialog>
+          )}
+        </AnimatePresence>
 
         <Line data={lineData} options={lineOptions} />
         <EntriesTable entries={filteredEntries} setData={setData} />

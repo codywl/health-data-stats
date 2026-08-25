@@ -45,12 +45,12 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
 
   const listItems = entries ? entries.map((entry: DataEntry, idx: number) =>
     <motion.li key={idx} layout>
-      <div className="text-sm bg-slate-800 m-1 border-2 border-slate-700 rounded-sm p-2 flex justify-between gap-2">
+      <div className="text-sm bg-slate-800 m-1 border border-slate-700 rounded-sm p-2 flex justify-between gap-2">
         <div className="flex flex-col">
           <span>Value: {entry.value}</span>
           <span>Date: {new Date(entry.date).toLocaleString()}</span>
         </div>
-        <button className="bg-red-600 border-2 border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
+        <button className="bg-red-600 border border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
     </motion.li>) : <span>No entries yet.</span>
   return (
@@ -124,6 +124,22 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   };
 
+  const handleExportData = (e: React.MouseEvent) => {
+    e.preventDefault();
+    let result = `${dataName},Date`;
+    for (const entry of data.entries) {
+      result += "\n" + entry.value + "," + new Date(entry.date).toLocaleString().replace(",", "");
+    }
+    const blob = new Blob([result], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dataName.toLowerCase().split(' ').join('')}-data.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
   const handleFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!inputVal || Number.isNaN(parseFloat(inputVal)) || parseFloat(inputVal) < 0 || parseFloat(inputVal) > 10) {
@@ -198,40 +214,51 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   return (
     <div className="flex flex-col gap-2 min-w-2/3 min-h-2/3">
       <div className="data-title max-w-2/3">{dataName}</div>
-      <div className="stats bg-slate-900 border-gray-700 border-2 rounded-sm min-h-20">
+      <div className="stats bg-slate-900 border-gray-700 border rounded-sm min-h-20 justify-around">
 
         <form className="p-2 flex gap-2" onSubmit={handleFormSubmit}>
-          <div className="border-2 border-slate-700 p-1 rounded-sm">
+          <div className="border border-slate-700 p-1 rounded-sm">
             <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} placeholder="1-10" onChange={e => setInputVal(e.target.value)} />
             <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
           </div>
-          <div className="border-2 border-slate-700 p-1 rounded-sm">
+          <div className="border border-slate-700 p-1 rounded-sm">
             <ResetButton handleReset={handleResetData} />
           </div>
-          <div className="border-2 border-slate-700 p-1 rounded-sm">
+          <div className="border border-slate-700 p-1 rounded-sm">
             <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-start" value={date} onChange={(e) => { handleDateChange(e) }} />
           </div>
         </form>
 
-        <div className="px-2 flex gap-2">
-          <div className="border-2 border-slate-700 p-1 rounded-sm">
-            <button className="cursor-pointer p-1 rounded-sm bg-blue-400" onClick={(e) => { setDialogPos({ x: e.clientX, y: e.clientY }) }}>Manual Entry</button>
+        <div className="px-2 pb-2 flex gap-2">
+          <div className="border border-slate-700 p-1 rounded-sm flex gap-2 w-full">
+            <button className="cursor-pointer p-1 rounded-sm from-blue-400 to-blue-700 bg-linear-to-br text-sm border-blue-500 border" onClick={(e) => { setDialogPos({ x: e.clientX, y: e.clientY }) }}>⚙ Manual</button>
+            <button className="cursor-pointer p-1 rounded-sm from-green-400 to-green-700 bg-linear-to-br text-sm border-green-500 border" onClick={(e) => handleExportData(e)}>💾 Export Data</button>
           </div>
         </div>
+
         <AnimatePresence>
           {dialogPos && (
             <Dialog cursorX={dialogPos.x} cursorY={dialogPos.y} onClose={() => setDialogPos(null)}>
-              <motion.form className="p-2 flex gap-2 bg-slate-800 rounded-sm" onSubmit={handleManualFormSubmit}>
-                <div className="border-2 border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
-                  <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualInputVal} placeholder="1-10" onChange={e => setManualInputVal(e.target.value)} />
-                  <input className="p-1 w-24 bg-slate-600 rounded" type="text" value={manualTime} placeholder="12AM-12PM" onChange={e => setManualTime(parseFloat(e.target.value))} />
+              <motion.form className="p-2 flex gap-2 shadow-2xl bg-slate-800 rounded-sm" onSubmit={handleManualFormSubmit}>
+                <div className="border border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
+                  <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualTime} placeholder="1-12" onChange={e => setManualTime(parseFloat(e.target.value) || "")} />
+                  <label htmlFor="ampm" className="h-6 self-center">AM</label>
+                  <input type="radio" value="AM" name="ampm" />
+                  <label htmlFor="ampm" className="h-6 self-center">PM</label>
+                  <input type="radio" value="PM" name="ampm" />
+                </div>
+                <div className="border border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
                   <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-manual" value={manualDate} onChange={(e) => { handleManualDateChange(e) }} />
+                </div>
+                <div className="border border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
+                  <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualInputVal} placeholder="1-10" onChange={e => setManualInputVal(e.target.value)} />
                   <button className="cursor-pointer p-1 rounded-sm bg-blue-400" type="submit">Add Entry</button>
                 </div>
               </motion.form>
             </Dialog>
           )}
         </AnimatePresence>
+
 
         <Line data={lineData} options={lineOptions} />
         <EntriesTable entries={filteredEntries} setData={setData} />

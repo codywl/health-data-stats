@@ -43,8 +43,8 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
     setData({ entries: newData })
   }
 
-  const listItems = entries ? entries.map((entry: DataEntry, idx: number) =>
-    <motion.li key={idx} layout>
+  const listItems = entries ? entries.map((entry: DataEntry) => {
+    return (<motion.li key={entry.date} initial={{ opacity: 0.8 }} animate={{ opacity: 1.0 }} exit={{ opacity: 0 }}>
       <div className="text-sm bg-slate-800 m-1 border border-slate-700 rounded-sm p-2 flex justify-between gap-2">
         <div className="flex flex-col">
           <span>Value: {entry.value}</span>
@@ -52,10 +52,13 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
         </div>
         <button className="bg-red-600 border border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
-    </motion.li>) : <span>No entries yet.</span>
+    </motion.li>)
+  }) : ""
   return (
     <ul className="max-h-40 overflow-scroll">
-      {listItems}
+      <AnimatePresence>
+        {listItems}
+      </AnimatePresence>
     </ul>
   )
 }

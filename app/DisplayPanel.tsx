@@ -126,9 +126,9 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
   const handleExportData = (e: React.MouseEvent) => {
     e.preventDefault();
-    let result = `${dataName},Date`;
+    let result = `${dataName},Date\n`;
     for (const entry of data.entries) {
-      result += "\n" + entry.value + "," + new Date(entry.date).toLocaleString().replace(",", "");
+      result += entry.value + "," + entry.date + "\n";
     }
     const blob = new Blob([result], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -139,7 +139,25 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }
+  };
+
+  const handleLoadData = async function(e: React.MouseEvent) {
+    e.preventDefault();
+    const filePickerElem = document.createElement('input');
+    filePickerElem.setAttribute("type", "file");
+    async function handleFileChange(this: HTMLInputElement) {
+      const files = this.files;
+      if (files) {
+        const text = await files[0].text();
+        const parsed = text.split("\n").slice(1).map((val) => { return { value: parseFloat(val.split(",")[0]), date: val.split(",")[1] } });
+        const entries = { entries: parsed.slice(0, parsed.length - 1) }
+        setData(entries);
+      }
+    }
+    filePickerElem.addEventListener("change", handleFileChange);
+    filePickerElem.click();
+  };
+
   const handleFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!inputVal || Number.isNaN(parseFloat(inputVal)) || parseFloat(inputVal) < 0 || parseFloat(inputVal) > 10) {
@@ -163,7 +181,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const handleResetData = () => {
     setData({ entries: [] });
     setConfirm(!confirm);
-  }
+  };
 
   const filteredEntries = date ?
     data.entries.filter(e => {
@@ -231,8 +249,9 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
         <div className="px-2 pb-2 flex gap-2">
           <div className="border border-slate-700 p-1 rounded-sm flex gap-2 w-full">
-            <button className="cursor-pointer p-1 rounded-sm from-blue-400 to-blue-700 bg-linear-to-br text-sm border-blue-500 border" onClick={(e) => { setDialogPos({ x: e.clientX, y: e.clientY }) }}>⚙ Manual</button>
-            <button className="cursor-pointer p-1 rounded-sm from-green-400 to-green-700 bg-linear-to-br text-sm border-green-500 border" onClick={(e) => handleExportData(e)}>💾 Export Data</button>
+            <button className="cursor-pointer p-1 rounded-sm from-blue-400 to-blue-700 bg-linear-to-br  border-blue-500 border" onClick={(e) => { setDialogPos({ x: e.clientX, y: e.clientY }) }}>⚙ Manual</button>
+            <button className="cursor-pointer p-1 rounded-sm from-green-400 to-green-700 bg-linear-to-br  border-green-500 border" onClick={(e) => handleExportData(e)}>💾 Export Data</button>
+            <button className="cursor-pointer p-1 rounded-sm from-yellow-400 to-yellow-700 bg-linear-to-br  border-yellow-500 border" onClick={(e) => handleLoadData(e)}>⇅ Load Data</button>
           </div>
         </div>
 

@@ -43,7 +43,7 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
     setData({ entries: newData })
   }
 
-  const listItems = entries ? entries.map((entry: DataEntry) => {
+  const listItems = entries.length > 0 ? entries.map((entry: DataEntry) => {
     return (<motion.li key={entry.date} initial={{ opacity: 0.8 }} animate={{ opacity: 1.0 }} exit={{ opacity: 0 }}>
       <div className="text-sm bg-slate-800 m-1 border border-slate-700 rounded-sm p-2 flex justify-between gap-2">
         <div className="flex flex-col">
@@ -53,9 +53,9 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
         <button className="bg-red-600 border border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
     </motion.li>)
-  }) : ""
+  }) : <span className="m-1 p-2 m-auto">No entries yet.</span>
   return (
-    <ul className="max-h-40 overflow-scroll">
+    <ul className="max-h-40 min-h-40 overflow-scroll flex flex-col align-center">
       <AnimatePresence>
         {listItems}
       </AnimatePresence>
@@ -235,8 +235,8 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   };
 
   return (
-    <div className="py-2 flex flex-col gap-2 min-h-2/3">
-      <div className="stats bg-slate-900 border-gray-700 border rounded-sm min-h-20 justify-around">
+    <div className="flex flex-col gap-2 min-h-2/3">
+      <div className="stats bg-slate-900 border-gray-700 border rounded-bl-sm rounded-br-sm min-h-20 justify-around">
         <h1 className="text-xl px-2 pt-2 data-title max-w-2/3">{dataName}</h1>
 
         <form className="p-2 flex gap-2" onSubmit={handleFormSubmit}>

@@ -97,6 +97,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [confirm, setConfirm] = useState(false);
   const [dialogPos, setDialogPos] = useState<{ x: number, y: number } | null>(null);
+  const [AMPM, setAMPM] = useState<"AM" | "PM">("AM");
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -111,7 +112,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const handleManualFormSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     const thisDate = new Date(`${manualDate}T00:00:00`);
-    thisDate.setHours(manualTime);
+    thisDate.setHours(AMPM == "AM" ? manualTime : manualTime + 12);
     const manualDataEntry = {
       value: parseFloat(manualInputVal),
       date: thisDate.toISOString()
@@ -159,6 +160,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     }
     filePickerElem.addEventListener("change", handleFileChange);
     filePickerElem.click();
+    document.removeChild(filePickerElem);
   };
 
   const handleFormSubmit = (e: React.SubmitEvent) => {
@@ -216,7 +218,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         max: new Date(rangeBaseDate).setHours(23, 59, 59, 0),
         ticks: {
           align: "start" as const,
-          maxTicksLimit: 24
+          maxTicksLimit: 6
         }
       }
     }
@@ -233,9 +235,9 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 min-w-2/3 min-h-2/3">
-      <div className="data-title max-w-2/3">{dataName}</div>
+    <div className="py-2 flex flex-col gap-2 min-h-2/3">
       <div className="stats bg-slate-900 border-gray-700 border rounded-sm min-h-20 justify-around">
+        <h1 className="text-xl px-2 pt-2 data-title max-w-2/3">{dataName}</h1>
 
         <form className="p-2 flex gap-2" onSubmit={handleFormSubmit}>
           <div className="border border-slate-700 p-1 rounded-sm">
@@ -264,10 +266,10 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
               <motion.form className="p-2 flex gap-2 shadow-2xl bg-slate-800 rounded-sm" onSubmit={handleManualFormSubmit}>
                 <div className="border border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
                   <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualTime} placeholder="1-12" onChange={e => setManualTime(parseFloat(e.target.value) || "")} />
-                  <label htmlFor="ampm" className="h-6 self-center">AM</label>
-                  <input type="radio" value="AM" name="ampm" />
-                  <label htmlFor="ampm" className="h-6 self-center">PM</label>
-                  <input type="radio" value="PM" name="ampm" />
+                  <label htmlFor="radio-am" className="h-6 self-center">AM</label>
+                  <input type="radio" id="radio-am" value="AM" name="ampm" onChange={() => setAMPM("AM")} />
+                  <label htmlFor="radio-pm" className="h-6 self-center">PM</label>
+                  <input type="radio" id="radio-pm" value="PM" name="ampm" onChange={() => setAMPM("PM")} />
                 </div>
                 <div className="border border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
                   <input className="w-38 p-1 rounded-sm bg-slate-600" type="date" name="date-manual" value={manualDate} onChange={(e) => { handleManualDateChange(e) }} />

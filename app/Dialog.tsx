@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 // Create an element at the cursor position to show children elements.
 export function Dialog(
   { children, cursorY, cursorX, onClose }:

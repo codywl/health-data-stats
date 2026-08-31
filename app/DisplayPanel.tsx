@@ -154,13 +154,15 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       if (files) {
         const text = await files[0].text();
         const parsed = text.split("\n").slice(1).map((val) => { return { value: parseFloat(val.split(",")[0]), date: val.split(",")[1] } });
-        const entries = { entries: parsed.slice(0, parsed.length - 1) }
-        setData(entries);
+        const combined = Array.from(
+          new Map([...data.entries, ...parsed]
+            .map(e => [e.date, e])).values())
+          .sort((a, b) => a.date > b.date ? 1 : -1);
+        setData({ entries: combined });
       }
     }
     filePickerElem.addEventListener("change", handleFileChange);
     filePickerElem.click();
-    document.removeChild(filePickerElem);
   };
 
   const handleFormSubmit = (e: React.SubmitEvent) => {

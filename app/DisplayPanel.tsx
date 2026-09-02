@@ -1,5 +1,5 @@
 "use client";
-import { useData } from "@/app/context/DisplayContext";
+import { useAppContext, useTab } from "@/app/context/DisplayContext";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { AnimatePresence, motion } from "motion/react";
@@ -89,7 +89,7 @@ function ResetButton({ handleReset }: { handleReset: Function }) {
 }
 
 export function DisplayPanel({ dataName }: { dataName: string }) {
-  const [data, setData] = useData(dataName);
+  const [entries, setEntries] = useTab(dataName);
   const [inputVal, setInputVal] = useState("");
   const [manualInputVal, setManualInputVal] = useState("");
   const [manualTime, setManualTime] = useState(1);
@@ -118,12 +118,12 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       date: thisDate.toISOString()
     }
 
-    if (data.entries.length === 0) {
-      setData({ entries: [...data.entries, manualDataEntry] });
+    if (entries.length === 0) {
+      setEntries([...entries, manualDataEntry]);
     }
-    else if (manualDataEntry.date != data.entries[data.entries.length - 1].date) {
-      const sortedData = { entries: [...data.entries, manualDataEntry].sort((a, b) => { return (a.date > b.date ? 1 : -1) }) };
-      setData(sortedData);
+    else if (manualDataEntry.date != entries[entries.length - 1].date) {
+      const sortedData = [...entries, manualDataEntry].sort((a, b) => { return (a.date > b.date ? 1 : -1) });
+      setEntries(sortedData);
     }
 
   };
@@ -131,7 +131,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const handleExportData = (e: React.MouseEvent) => {
     e.preventDefault();
     let result = `${dataName},Date\n`;
-    for (const entry of data.entries) {
+    for (const entry of entries) {
       result += entry.value + "," + entry.date + "\n";
     }
     const blob = new Blob([result], { type: "text/plain" });
@@ -155,10 +155,10 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         const text = await files[0].text();
         const parsed = text.split("\n").slice(1).map((val) => { return { value: parseFloat(val.split(",")[0]), date: val.split(",")[1] } });
         const combined = Array.from(
-          new Map([...data.entries, ...parsed]
+          new Map([...entries, ...parsed]
             .map(e => [e.date, e])).values())
           .sort((a, b) => a.date > b.date ? 1 : -1);
-        setData({ entries: combined });
+        setEntries(combined);
       }
     }
     filePickerElem.addEventListener("change", handleFileChange);
@@ -176,24 +176,24 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       date: new Date().toISOString(),
     };
 
-    if (data.entries.length === 0) {
-      setData({ entries: [...data.entries, newDataEntry] });
+    if (entries.length === 0) {
+      setEntries([...entries, newDataEntry]);
     }
-    else if (newDataEntry.date != data.entries[data.entries.length - 1].date) {
-      setData({ entries: [...data.entries, newDataEntry] });
+    else if (newDataEntry.date != entries[entries.length - 1].date) {
+      setEntries([...entries, newDataEntry]);
     }
     setInputVal("");
   };
 
   const handleResetData = () => {
-    setData({ entries: [] });
+    setEntries([]);
     setConfirm(!confirm);
   };
 
   const filteredEntries = date ?
-    data.entries.filter(e => {
+    entries.filter(e => {
       return new Date(e.date).toLocaleDateString("en-CA") == date
-    }) : data.entries;
+    }) : entries;
 
 
   const rangeBaseDate = date ? new Date(`${date}T00:00:00`) : new Date();
@@ -287,7 +287,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
 
 
         <Line data={lineData} options={lineOptions} />
-        <EntriesTable entries={filteredEntries} setData={setData} />
+        <EntriesTable entries={filteredEntries} setData={setEntries} />
       </div>
     </div >
   );

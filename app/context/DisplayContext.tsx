@@ -1,16 +1,19 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
 
-type DataEntry = {
+type PaneDataEntry = {
   value: number,
   date: string,
 };
 
-type DataSet = {
-  entries: DataEntry[]
+type Tab = {
+  name: string;
+  entries: PaneDataEntry[];
 };
 
-type FullDataSet = Record<string, DataSet>;
+type AppData = {
+  tabs: Tab[];
+};
 
 function useLocalStorage<T>(key: string, fallback: T) {
   // val as a stateful value, setVal changes it
@@ -33,26 +36,51 @@ function useLocalStorage<T>(key: string, fallback: T) {
     }
   }, [key, val]);
 
-  return [val, setVal] as const;
+  return [val, setVal, loaded] as const;
 }
 
-export const DisplayContext = createContext<{
-  data: FullDataSet,
-  setNew: (key: string, dataset: DataSet) => void;
+// pass a context down that contains data: AppData (Record<string, DataSet>)
+// this allows child components to get setNew, taking a key and an object representing the dataset
+export const AppContext = createContext<{
+  data: AppData,
+  setData: (data: AppData) => void;
+  loaded: boolean;
 } | null>(null);
 
-export function DisplayProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useLocalStorage<FullDataSet>("cfs-data", {})
-  const setNew = (key: string, dataset: DataSet) => setData({ ...data, [key]: dataset })
-  return <DisplayContext value={{ data, setNew }}>{children}</DisplayContext>
+// child components inside appprovider get the data set and a function to set new values on it
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [data, setData, loaded] = useLocalStorage<AppData>("cfs-data", { tabs: [] })
+  return <AppContext value={{ data, setData, loaded }}>{children}</AppContext>
 };
 
-export function useData(dataName: string) {
-  const ctx = useContext(DisplayContext);
+// import to get the default data set or the one retrieved in localstorage from dataName, plus setData
+// (as long as there is a DisplayContext parent in the form of DisplayProvider)
+export function useAppContext() {
+  const ctx = useContext(AppContext);
   if (!ctx) {
-    throw new Error("use useData in DisplayProvider");
+    throw new Error("use useDataPanes in DisplayProvider");
   }
-  const dataset = ctx.data[dataName] ?? { entries: [] };
-  const setData = (ds: DataSet) => ctx.setNew(dataName, ds);
-  return [dataset, setData] as const;
+  return ctx;
+}
+
+export function useTabs() {
+  const { data, setData, loaded } = useAppContext();
+  const addTab = (name: string) => {
+    setData({ tabs: [...data.tabs, { name, entries: [] }] })
+  };
+  const seedTabs = (names: string[]) => {
+    setData({ tabs: names.map(name => ({ name, entries: [] })) })
+  };
+  return { tabs: data.tabs, loaded, addTab, seedTabs };
+}
+
+export function useTab(name: string) {
+  const { data, setData } = useAppContext();
+  const tab = data.tabs.find(t => t.name === name);
+  const entries = tab?.entries ?? [];
+  const setEntries = (entries: PaneDataEntry[]) => {
+    setData({ tabs: data.tabs.map(t => t.name === name ? { ...t, entries } : t) })
+  }
+  return [entries, setEntries] as const;
+
 }

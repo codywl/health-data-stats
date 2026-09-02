@@ -1,4 +1,3 @@
-import Image from "next/image";
 import DisplayTabs from "./DisplayTabs";
 
 export default function Home() {

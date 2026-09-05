@@ -68,10 +68,13 @@ export function useTabs() {
   const addTab = (name: string) => {
     setData({ tabs: [...data.tabs, { name, entries: [] }] })
   };
+  const removeTab = (name: string) => {
+    setData({ tabs: data.tabs.filter((val) => { return val.name !== name }) })
+  }
   const seedTabs = (names: string[]) => {
     setData({ tabs: names.map(name => ({ name, entries: [] })) })
   };
-  return { tabs: data.tabs, loaded, addTab, seedTabs };
+  return { tabs: data.tabs, loaded, addTab, removeTab, seedTabs };
 }
 
 export function useTab(name: string) {

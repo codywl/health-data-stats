@@ -1,5 +1,5 @@
 "use client";
-import { useAppContext, useTab } from "@/app/context/DisplayContext";
+import { useTab } from "@/app/context/DisplayContext";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { AnimatePresence, motion } from "motion/react";
@@ -16,6 +16,8 @@ import {
 } from 'chart.js';
 import "chartjs-adapter-date-fns";
 import { Dialog } from "./Dialog";
+import VanillaCalendar from "./VanillaCalendar";
+import { parseDates } from "vanilla-calendar-pro/utils";
 
 ChartJS.register(
   CategoryScale,
@@ -53,7 +55,7 @@ function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData
         <button className="bg-red-600 border border-red-500 rounded-sm cursor-pointer p-2" onClick={() => { handleRemove(entry.date) }}>Remove</button>
       </div>
     </motion.li>)
-  }) : <span className="m-1 p-2 m-auto">No entries yet.</span>
+  }) : <span className="p-2 m-auto">No entries yet.</span>
   return (
     <ul className="max-h-40 min-h-40 overflow-scroll flex flex-col align-center">
       <AnimatePresence>
@@ -96,8 +98,11 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
   const [manualDate, setManualDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
   const [confirm, setConfirm] = useState(false);
-  const [dialogPos, setDialogPos] = useState<{ x: number, y: number } | null>(null);
+  const [manualDialogPos, setManualDialogPos] = useState<{ x: number, y: number } | null>(null);
   const [AMPM, setAMPM] = useState<"AM" | "PM">("AM");
+  const [isRange, setRange] = useState(false);
+  const [rangeDate, setRangeDate] = useState({ min: "", max: "" });
+  const [dateDialogPos, setDateDialogPos] = useState<{ x: number, y: number } | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -190,14 +195,18 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
     setConfirm(!confirm);
   };
 
-  const filteredEntries = date ?
+  const filteredEntries = isRange && rangeDate.max && rangeDate.min ?
     entries.filter(e => {
-      return new Date(e.date).toLocaleDateString("en-CA") == date
-    }) : entries;
+      const date = new Date(e.date).toLocaleDateString("en-CA");
+      return date >= rangeDate.min && date <= rangeDate.max;
+    }) : date ?
+      entries.filter(e => {
+        return new Date(e.date).toLocaleDateString("en-CA") == date
+      }) : entries;
 
 
   const rangeBaseDate = date ? new Date(`${date}T00:00:00`) : new Date();
-  const lineOptions = {
+  const lineOptions = !isRange ? {
     responsive: true,
     color: "#fff",
     plugins: {
@@ -224,7 +233,26 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         }
       }
     }
-  };
+  } : {
+    responsive: true,
+    color: "#fff",
+    plugins: {
+      legend: {
+        display: false
+      },
+    },
+    scales: {
+      y: {
+        min: 0,
+        max: 10,
+      },
+      x: {
+        type: "time" as const,
+        min: new Date(rangeDate.min),
+        max: new Date(rangeDate.max)
+      }
+    }
+  }
 
   const lineData = {
     datasets: [
@@ -241,7 +269,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       <div className="stats bg-slate-900 border-gray-700 border rounded-bl-sm rounded-br-sm min-h-20 justify-around">
         <h1 className="text-xl px-2 pt-2 data-title max-w-2/3">{dataName}</h1>
 
-        <form className="p-2 flex gap-2" onSubmit={handleFormSubmit}>
+        <form className="p-2 flex gap-2 justify-between" onSubmit={handleFormSubmit}>
           <div className="border border-slate-700 p-1 rounded-sm">
             <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={inputVal} placeholder="1-10" onChange={e => setInputVal(e.target.value)} />
             <button className="cursor-pointer ml-2 p-1 rounded-sm bg-slate-600" type="submit">Add Entry</button>
@@ -255,16 +283,35 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
         </form>
 
         <div className="px-2 pb-2 flex gap-2">
-          <div className="border border-slate-700 p-1 rounded-sm flex gap-2 w-full">
-            <button className="cursor-pointer p-1 rounded-sm from-blue-400 to-blue-700 bg-linear-to-br  border-blue-500 border" onClick={(e) => { setDialogPos({ x: e.clientX, y: e.clientY }) }}>⚙ Manual</button>
+          <div className="p-1 rounded-sm flex gap-2 w-full justify-between">
+            <button className="cursor-pointer p-1 rounded-sm from-blue-400 to-blue-700 bg-linear-to-br  border-blue-500 border" onClick={(e) => { setManualDialogPos({ x: e.clientX, y: e.clientY }) }}>⚙ Manual</button>
             <button className="cursor-pointer p-1 rounded-sm from-green-400 to-green-700 bg-linear-to-br  border-green-500 border" onClick={(e) => handleExportData(e)}>💾 Export Data</button>
             <button className="cursor-pointer p-1 rounded-sm from-yellow-400 to-yellow-700 bg-linear-to-br  border-yellow-500 border" onClick={(e) => handleLoadData(e)}>⇅ Load Data</button>
+            <button className="cursor-pointer p-1 rounded-sm from-teal-400 to-teal-700 bg-linear-to-br  border-teal-500 border" onClick={(e) => { setDateDialogPos({ x: e.clientX, y: e.clientY }) }}>📅 Range</button>
           </div>
         </div>
 
         <AnimatePresence>
-          {dialogPos && (
-            <Dialog cursorX={dialogPos.x} cursorY={dialogPos.y} onClose={() => setDialogPos(null)}>
+          {dateDialogPos && (
+            <Dialog cursorX={dateDialogPos.x} cursorY={dateDialogPos.y} onClose={() => setDateDialogPos(null)}>
+              <VanillaCalendar config={{
+                selectionDatesMode: "multiple-ranged",
+                onClickDate(self, event) {
+                  if (self.context.selectedDates.length > 1) {
+                    console.log(self.context.selectedDates);
+                    setRange(true);
+                    setRangeDate({ min: self.context.selectedDates[0], max: self.context.selectedDates[1] })
+                    setDateDialogPos(null);
+                  }
+                }
+              }} />
+            </Dialog>
+          )
+          }
+        </AnimatePresence>
+        <AnimatePresence>
+          {manualDialogPos && (
+            <Dialog cursorX={manualDialogPos.x} cursorY={manualDialogPos.y} onClose={() => setManualDialogPos(null)}>
               <motion.form className="p-2 flex gap-2 shadow-2xl bg-slate-800 rounded-sm" onSubmit={handleManualFormSubmit}>
                 <div className="border border-slate-700 p-1 rounded-sm flex gap-2 justify-around w-full">
                   <input className="p-1 w-10 bg-slate-600 rounded" type="text" value={manualTime} placeholder="1-12" onChange={e => setManualTime(parseFloat(e.target.value) || "")} />

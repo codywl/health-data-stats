@@ -297,6 +297,7 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
             <button className="cursor-pointer p-1 rounded-sm from-teal-400 to-teal-700 bg-linear-to-br  border-teal-500 border" onClick={(e) => { setDateDialogPos({ x: e.clientX, y: e.clientY }) }}>📅 Range</button>
           </div>
         </div>
+        {isRange ? <div className="px-3 pb-2 flex gap-2"><button className="cursor-pointer p-1 rounded-sm from-red-400 to-yellow-700 bg-linear-to-br" onClick={() => setRange(false)}>→ Exit Range</button></div> : ""}
 
         <AnimatePresence>
           {dateDialogPos && (
@@ -305,7 +306,6 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
                 selectionDatesMode: "multiple-ranged",
                 onClickDate(self, event) {
                   if (self.context.selectedDates.length > 1) {
-                    console.log(self.context.selectedDates);
                     setRange(true);
                     setRangeDate({ min: self.context.selectedDates[0], max: self.context.selectedDates[1] })
                     setDateDialogPos(null);

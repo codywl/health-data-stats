@@ -17,7 +17,6 @@ import {
 import "chartjs-adapter-date-fns";
 import { Dialog } from "./Dialog";
 import VanillaCalendar from "./VanillaCalendar";
-import { parseDates } from "vanilla-calendar-pro/utils";
 
 ChartJS.register(
   CategoryScale,
@@ -42,7 +41,7 @@ type DataEntry = {
 function EntriesTable({ entries, setData }: { entries: Array<DataEntry>, setData: Function }) {
   function handleRemove(date: string) {
     const newData = entries.filter((val) => { return val.date !== date });
-    setData({ entries: newData })
+    setData(newData)
   }
 
   const listItems = entries.length > 0 ? entries.map((entry: DataEntry) => {
@@ -91,18 +90,18 @@ function ResetButton({ handleReset }: { handleReset: Function }) {
 }
 
 export function DisplayPanel({ dataName }: { dataName: string }) {
+  const [AMPM, setAMPM] = useState<"AM" | "PM">("AM");
+  const [confirm, setConfirm] = useState(false);
+  const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
+  const [dateDialogPos, setDateDialogPos] = useState<{ x: number, y: number } | null>(null);
   const [entries, setEntries] = useTab(dataName);
   const [inputVal, setInputVal] = useState("");
+  const [isRange, setRange] = useState(false);
+  const [manualDate, setManualDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
+  const [manualDialogPos, setManualDialogPos] = useState<{ x: number, y: number } | null>(null);
   const [manualInputVal, setManualInputVal] = useState("");
   const [manualTime, setManualTime] = useState(1);
-  const [manualDate, setManualDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
-  const [date, setDate] = useState(new Date().toLocaleDateString("en-CA").slice(0, 10));
-  const [confirm, setConfirm] = useState(false);
-  const [manualDialogPos, setManualDialogPos] = useState<{ x: number, y: number } | null>(null);
-  const [AMPM, setAMPM] = useState<"AM" | "PM">("AM");
-  const [isRange, setRange] = useState(false);
   const [rangeDate, setRangeDate] = useState({ min: "", max: "" });
-  const [dateDialogPos, setDateDialogPos] = useState<{ x: number, y: number } | null>(null);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -248,8 +247,16 @@ export function DisplayPanel({ dataName }: { dataName: string }) {
       },
       x: {
         type: "time" as const,
-        min: new Date(rangeDate.min),
-        max: new Date(rangeDate.max)
+        time: {
+          unit: "day" as const,
+        },
+        displayFormats: { day: "MMM d" },
+        min: new Date(`${rangeDate.min}T00:00:00`).getTime(),
+        max: new Date(`${rangeDate.max}T23:59:59`).getTime(),
+        ticks: {
+          align: "start" as const,
+          maxTicksLimit: 6
+        }
       }
     }
   }
